@@ -37,6 +37,7 @@ class OcamlAnnotCommand(sublime_plugin.TextCommand):
 		step = 0
 		for line in f.readlines():
 			if step==0 and line[0]=='"':
+				s = ""
 				a = re.sub(r'".*?" ', r'', line).split()
 				pl, p1, p2 = map(lambda x: int(x), [a[1], a[2], a[5]]) # editor starts at col 1
 				# print 'Region from', p1, 'to', p2, 'on line', a[0], '(starting at char ' + str(pl) + ')'
@@ -47,6 +48,10 @@ class OcamlAnnotCommand(sublime_plugin.TextCommand):
 			elif step==1 and line.strip()=='type(':
 				step = 2
 			elif step==2:
-				sublime.status_message('Type: '+line.strip())
+				s += line[2:len(line)-1] # strip 2 spaces indentation in front and \n at the end
+				if line[0]==')':
+					step = 3
+			elif step==3:
+				sublime.status_message('Type: '+s.strip())
 				return
 		sublime.status_message('No type annotation found')
