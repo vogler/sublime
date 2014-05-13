@@ -2,7 +2,7 @@ import sublime, sublime_plugin
 import threading
 import atexit
 import time
-import SocketServer
+import socketserver
 import re
 import os.path
 
@@ -15,13 +15,13 @@ def process(cwd, lines):
         # print line
         m = re.match(r"File \"(.+)\", line (.+), characters (.+)-(.+):", line)
         if m:
-            print "%s at line %s from %s-%s" % (m.group(1), m.group(2), m.group(3), m.group(4))
+            print("{} at line {} from {}-{}".format(m.group(1), m.group(2), m.group(3), m.group(4)))
             filename = m.group(1)
             row, col1, col2 = map(int, [m.group(2), m.group(3), m.group(4)])
-            suffix = ":%s:%s" % (row, col1)
+            suffix = ":{}:{}".format(row, col1)
             path = os.path.join(cwd, filename)
             if not os.path.exists(path):
-                print("Couldn't find file %s"%path)
+                print("Couldn't find file {}".format(path))
                 # TODO save view to show message on UI-thread, otherwise sublime crashes
                 # sublime.error_message("Couldn't find file %s"%path)
             else:
@@ -39,7 +39,7 @@ def process(cwd, lines):
     return False
 
 
-class MyTCPHandler(SocketServer.StreamRequestHandler):
+class MyTCPHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
         print("ocaml_build received error message")
@@ -47,7 +47,7 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
         line = 1
         lines = []
         while line: # readlines() doesn't work :(
-            line = self.rfile.readline()
+            line = str(self.rfile.readline())
             # print line
             if line.strip().startswith("Command exited with code"): break
             lines.append(line)
@@ -76,7 +76,7 @@ class Server(threading.Thread):
     def start_server(self, port):
         print("ocaml_build start server")
         # Create the server, binding to HOST on port
-        self.server = SocketServer.TCPServer((HOST, port), MyTCPHandler)
+        self.server = socketserver.TCPServer((HOST, port), MyTCPHandler)
         # self.server.allow_reuse_address = True
         self.server.serve_forever()
 
